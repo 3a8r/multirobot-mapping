@@ -1,0 +1,33 @@
+% Matlab code to test Multi-robot SLAM strategies
+%
+%   
+%   
+clc;
+disp(' ');
+disp('              Software associated with the paper: ');
+disp('          Right Representation for Multi-robot SLAM');
+disp('        by Viorela Ila');
+disp(' ');
+
+
+SuiteSparsePath_ela='~/Work_mac/code/SuiteSparse';
+SuiteSparsePath_others='~/borg/SuiteSparse';
+slam_optim_Path='~/LAAS/matlab/';
+
+if exist(SuiteSparsePath_ela,'dir') 
+    path(path,genpath(SuiteSparsePath_ela));  
+    path(path,genpath(slam_optim_Path)); 
+    path(path,genpath(pwd));
+    clear SuiteSparsePath_ela;
+    clear SuiteSparsePath_others;
+elseif exist(SuiteSparsePath_others,'dir') 
+    path(path,genpath(SuiteSparsePath_others));  
+    path(path,genpath(slam_optim_Path));    
+    path(path,genpath(pwd));
+    clear SuiteSparsePath_ela;
+    clear SuiteSparsePath_others;
+else
+    disp(' Can not find SuiteSparse !! ');  
+    path(path,genpath(pwd));
+    clear SuiteSparsePath;
+end
