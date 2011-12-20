@@ -1,9 +1,9 @@
-function [rdv,edRF]=isRendezvous(idXH,edIntRob)
+function [rdv,edRF]=isRendezvous(idH,edIntRob)
 % the rendezvus points are in R.edIntRob
 % R.edIntRob(:,1)- host robot RH
 % R.edIntRob(:,2)- friend robot RF
-idHost=edIntRob(:,1);
-rendezRH= ismember(idHost, idXH(end)); % rendez is 1 when RH.idX(end) is involved in a rendezvous
+idHost=edIntRob(:,1)+1;
+rendezRH= ismember(idHost, idH(end)); % rendez is 1 when RH.idX(end) is involved in a rendezvous
 rdv=0;
 if sum(rendezRH)
     disp('Rendezvous');
@@ -13,6 +13,12 @@ if sum(rendezRH)
 else
     edRF=[];
 end
+
+
+
+
+
+
 
  
 %     % store the randev point from file
