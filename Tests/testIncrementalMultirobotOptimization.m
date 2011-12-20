@@ -4,10 +4,12 @@ function testIncrementalMultirobotOptimization
 close all;
 global Timing
 Timing.flag=0;
-R1.Data.name='R12D';
+
+nRobots=2;
+R1.Data.name='10KR1';
 R1.Data.saveFiles=0;
 R1.Data.maxID=0;
-R2.Data.name='R12D';
+R2.Data.name='10KR2';
 R2.Data.saveFiles=0;
 R2.Data.maxID=0;
 
@@ -37,21 +39,39 @@ Plot.fname=sprintf('%s_',R1.Data.name);
 
 %ROBOT1
 R1=robotInitialization(R1.Data);
-
-% Randevous parrameters
-R1.idXR1=R1.Data.vert(1,1);
-R1.idXR2=[];
-%... For each robot in the team we have a R1.idXRi=[];
-R1.rendezOffset=zeros(size(R1.Data.vert,1),1);
-
 %ROBOT2
 R2=robotInitialization(R2.Data);
 
 
-% Randevous parrameters
-R2.idXR2=R2.Data.vert(1,1);
-R2.idXR1=[];
-%... For each robot in the team we have a R1.idXRi=[];
+% Index matrices
+
+
+% Randevous parrameters R1
+
+% indexMatrix
+% First column is the state index (Copy of the R1.idX), 
+% second column is indexes of the host robot,
+% the rest of the columns are the indexes of the friends robots;
+% IMPORTANT: sparse indexMatrix stores index+1 (becase there are index='0')
+R1.indexMatrix=sparse(zeros(1,nRobots+1)); 
+R1.indexMatrix(1,1)=R1.Graph.idX(1)+1;
+R1.indexMatrix(1,2)=R1.Data.vert(1,1);
+
+R1.rendezOffset=zeros(size(R1.Data.vert,1),1);
+
+% Randevous parrameters R2
+
+% indexMatrix
+% First column is the state index (Copy of the R1.idX), 
+% second column is indexes of the host robot,
+% the rest of the columns are the indexes of the friends robots;
+% IMPORTANT: sparse indexMatrix stores index+1 (becase there are index='0')
+
+R2.indexMatrix=sparse(zeros(1,nRobots+1)); 
+R2.indexMatrix(1,1)=R2.Graph.idX(1)+1;
+R2.indexMatrix(1,2)=R2.Data.vert(1,1);
+
+
 % TODO check if the following params are needed
 R2.lastRendevIdRF=0; % this is the last position in R1.idX from the last rendezvous
 R2.rendezOffset=zeros(size(R2.Data.vert,1),1);
@@ -65,40 +85,59 @@ activeR2=ind<=R2.Data.nEd;
 
 edIntRob=R2.Data.edIntRob; %tmp
 
+z=zeros(1,nRobots+1);
 
 while (activeR1 || activeR2)   
     if activeR1
         factorR1=processEdgeData(R1.Data.ed(ind,:),R1.Data.obsType,R1.Graph.idX); 
-        % keep track of the original final!
-        finalR1=factorR1.final;
-        R1.idXR1= [R1.idXR1;finalR1];
+        final=factorR1.final;% remember the original id of the final
+        
         % reset ids in case there was a rendezvous
+        % TODO get rendezOffset from indexMatrix
         factorR1.origine=factorR1.origine+R1.rendezOffset(factorR1.origine+1);
         factorR1.final=factorR1.final+R1.rendezOffset(factorR1.final+1);
-        R1.Config=addVariableConfig(factorR1,R1.Config,R1.Graph.idX);
+        R1.Config=addVariableConfig(factorR1,R1.Config);
         R1.System=addFactor(factorR1,R1.Config,R1.System);
         R1.Graph=addVarLinkToGraph(factorR1,R1.Graph);
+        
+        % augment the indexMatrix if new variable
+        if strcmp(factorR1.type,'pose') % TODO check also for the ather type of variables
+            R1.indexMatrix=[R1.indexMatrix;z];
+            R1.indexMatrix(end,2)=final+1; % keep the file id of the new variable
+            [rdv,edRF]=isRendezvous(R2.indexMatrix(end,2),edIntRob); % check if the new variable is involved in rendezvous 
+        end
+        
         
     end
     if activeR2
         factorR2=processEdgeData(R2.Data.ed(ind,:),R2.Data.obsType,R2.Graph.idX); 
-        % keep track of the original final!
-        finalR2=factorR2.final;
-        R2.idXR2=[R2.idXR2;finalR2];
+        final=factorR2.final;% remember the original id of the final
+        
         % reset ids in case there was a rendezvous
+        % TODO get rendezOffset from indexMatrix
         factorR2.origine=factorR2.origine+R2.rendezOffset(factorR2.origine+1);
         factorR2.final=factorR2.final+R2.rendezOffset(factorR2.final+1);
-        R2.Config=addVariableConfig(factorR2,R2.Config,R2.Graph.idX);
+        R2.Config=addVariableConfig(factorR2,R2.Config);
         R2.System=addFactor(factorR2,R2.Config,R2.System);
         R2.Graph=addVarLinkToGraph(factorR2,R2.Graph);
+        
+        
+        % augment the indexMatrix if new variable
+        if strcmp(factorR2.type,'pose') % TODO check also for the ather type of variables
+            R2.indexMatrix=[R2.indexMatrix;z];
+            R2.indexMatrix(end,2)=final; % keep the file id of the new variable
+            [rdv,edRF]=isRendezvous(R2.indexMatrix(end,2),edIntRob); % check if the new variable is involved in rendezvous
+            if   rdv
+                disp('rdv')
+                %    [R1,R2]=rendezvous(R1,R2,edRF);
+            end
+            
+        end
     end
     
-%     [rdv,edRF,R2.idXR1]=isRendezvous(R2.idXR1,R2.idXR2,edIntRob); % R1-friend, R2-host
-%     
-%     if   rdv
-%         disp('rdv')
-%         [R1,R2]=rendezvous(R1,R2,edRF);
-%     end
+
+    
+
 
     % update RH.edIntRob ids
     % edIntRob(:,1)=R2.Data.edIntRob(:,1)+R2.rendezOffset(R2.Data.edIntRob(:,1)+1); 

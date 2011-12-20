@@ -16,20 +16,20 @@ function [vertices,edges,edges_introb,dataFile]=loadMultirobotDataSet(dataSet,sa
 % 	'beijing'  - 'data/BeijingData/beijingData_trips.log'
 switch dataSet
     case 'intelR1'
-        dataFileGraph = '~/LAAS/matlab/MultirobotMapping/Data/intelR1.graph';
+        dataFileGraph = '~/LAAS/matlab/multirobot-mapping/Data/intelR1.graph';
     case 'intelR2'
-        dataFileGraph = '~/LAAS/matlab/MultirobotMapping/Data/intelR2.graph';
+        dataFileGraph = '~/LAAS/matlab/multirobot-mapping/Data/intelR2.graph';
     case '10KR1'
-        dataFileGraph = '~/LAAS/matlab/MultirobotMapping/Data/10KR1.graph';
+        dataFileGraph = '~/LAAS/matlab/multirobot-mapping/Data/10KR1.graph';
     case '10KR2'
-        dataFileGraph = '~/LAAS/matlab/MultirobotMapping/Data/10KR2.graph';
+        dataFileGraph = '~/LAAS/matlab/multirobot-mapping/Data/10KR2.graph';
         %ROSACE
-    case 'R12D'
-        dataFileGraph = '~/LAAS/matlab/MultirobotMapping/Data/R12D.graph';
-    case 'R22D'
-        dataFileGraph = '~/LAAS/matlab/MultirobotMapping/Data/R22D.graph';
-    case 'R32D'
-        dataFileGraph = '~/LAAS/matlab/MultirobotMapping/Data/R32D.graph';
+    case 'R1_2D'
+        dataFileGraph = '~/LAAS/datasets/Rosace/R1_2D.graph';
+    case 'R2_2D'
+        dataFileGraph = '~/LAAS/datasets/Rosace/R2_2D.graph';
+    case 'R3_2D'
+        dataFileGraph = '~/LAAS/datasets/Rosace/R3_2D.graph';
     otherwise
         error('Dataset does not exist!');
 end
@@ -46,9 +46,13 @@ clear edges;
 % read the file
 if exist(dataFileMat,'file')
     load(dataFileMat);
-    disp('Loading ed, ver from file ...')
+    disp('Loading ed, ver from MAT file ...')
+    if ~exist('edges_introb')
+        edges_introb=[];
+    end;
 else
     [vertices, edges,edges_introb]=loadFromMultirobotFile(dataFileGraph);
+    disp('Read ed, ver from GRAPH file ...')
 end
 if saveFile
     %save data to a mat file
