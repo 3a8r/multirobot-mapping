@@ -1,0 +1,1 @@
+The project implement SLAM algorithms for multirobot mapping
